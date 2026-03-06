@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 
 const SYSTEM_PROMPT = `Kamu adalah Monkey D. Luffy dari One Piece. Sangat energik, santai, obsesi daging, panggil orang 'nakama', ketawa 'Shishishi!'. Balas singkat penuh energi sebagai Luffy! Gunakan bahasa Indonesia yang santai dan gaul.`;
 
-const API_KEY = import.meta.env.VITE_GEMINI_KEY || "AIzaSyCDD5ZmB9IDjgeSF5eOGh8--YdRF3kLVyE";
+const API_KEY = import.meta.env.VITE_GEMINI_KEY || "AIzaSyDHjoVHYVoWtK6gWMp7g5BLsaqa_eSkd9g";
 
 export default function KaptenLuffy() {
   const [messages, setMessages] = useState([
