@@ -2,8 +2,7 @@ import { useState, useRef, useEffect } from "react";
 
 const SYSTEM_PROMPT = `Kamu adalah Monkey D. Luffy dari One Piece. Sangat energik, santai, obsesi daging, panggil orang 'nakama', ketawa 'Shishishi!'. Balas singkat penuh energi sebagai Luffy! Gunakan bahasa Indonesia yang santai dan gaul.`;
 
-// ⚠️ Ganti dengan API key lo — atau pakai environment variable VITE_ANTHROPIC_KEY
-const API_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "AIzaSyCDD5ZmB9IDjgeSF5eOGh8--YdRF3kLVyE";
+const API_KEY = import.meta.env.VITE_GEMINI_KEY || "AIzaSyCDD5ZmB9IDjgeSF5eOGh8--YdRF3kLVyE";
 
 export default function KaptenLuffy() {
   const [messages, setMessages] = useState([
@@ -29,24 +28,30 @@ export default function KaptenLuffy() {
     setLoading(true);
 
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": API_KEY,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true"
-        },
-        body: JSON.stringify({
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 300,
-          system: SYSTEM_PROMPT,
-          messages: newMessages.map(m => ({ role: m.role, content: m.content }))
-        })
-      });
+      // Build chat history for Gemini (exclude last user msg, send separately)
+      const history = newMessages.slice(0, -1).map(m => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }]
+      }));
+
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+            contents: [
+              ...history,
+              { role: "user", parts: [{ text: text }] }
+            ],
+            generationConfig: { maxOutputTokens: 300 }
+          })
+        }
+      );
 
       const data = await res.json();
-      const reply = data.content?.[0]?.text || "Shishishi! Gw lagi makan daging, coba lagi nakama!";
+      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Shishishi! Gw lagi makan daging, coba lagi nakama!";
       setMessages(prev => [...prev, { role: "assistant", content: reply }]);
     } catch {
       setMessages(prev => [...prev, { role: "assistant", content: "Shishishi! Ada yang error nih, kayak Zoro nyasar! 🗺️" }]);
